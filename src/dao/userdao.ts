@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import type { UUID } from "crypto";
 import type { Pool } from "pg";
 import type { User } from "../models/user.ts";
-import { hashPassword, verifyPassword } from "../utils/hash.ts";
+import { hashApiKey, hashPassword, verifyPassword } from "../utils/hash.ts";
 
 
 export class UserDao {
@@ -18,7 +18,6 @@ export class UserDao {
             delete row.passwordhash
             delete row.apikeyhash
         }
-        console.log(results.rows)
         return results.rows as User[]
     }
 
@@ -33,8 +32,8 @@ export class UserDao {
         return result as User
     }
 
-    public async getUserByKey(api_key: UUID): Promise<User | null> {
-        const hashedApiKey = await hashPassword(api_key)
+    public async getUserByKey(apiKey: UUID): Promise<User | null> {
+        const hashedApiKey = hashApiKey(apiKey)
         const results = await this.pool.query("SELECT * FROM users WHERE apiKeyHash = $1", [hashedApiKey])
         if (results.rowCount === 0)  {
             return null
@@ -59,7 +58,7 @@ export class UserDao {
     public async createUser(email: string, password: string, isAdministrator: boolean): Promise<string> {
         const apiKey = randomUUID()
         const passwordHash = await hashPassword(password)
-        const apiKeyHash = await hashPassword(apiKey)
+        const apiKeyHash = hashApiKey(apiKey)
         try {
             await this.pool.query(
                 `
