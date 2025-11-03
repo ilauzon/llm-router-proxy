@@ -6,6 +6,7 @@ import { createAdminRouter } from './routes/adminRoutes.ts'
 import { Pool } from 'pg'
 import { UserDao } from "./dao/userdao.ts"
 import { createAuthRouter } from './routes/authRoutes.ts'
+import { AuthMiddleware } from './middleware/authMiddleware.ts';
 
 
 const app: Application = express()
@@ -20,6 +21,7 @@ const dbService: Pool = new Pool({
 })
 
 const userDao: UserDao = new UserDao(dbService)
+const authMiddleware: AuthMiddleware = new AuthMiddleware(userDao)
 
 try {
     await userDao.createUser(process.env.ADMIN_USERNAME!, process.env.ADMIN_PASSWORD!, true)
@@ -46,8 +48,8 @@ app.use(session({
     },
 }))
 
-app.use("/admin", createAdminRouter(dbService))
+app.use("/admin", createAdminRouter(dbService, authMiddleware))
 
-app.use("/auth", createAuthRouter(dbService))
+app.use("/auth", createAuthRouter(dbService, authMiddleware))
 
 app.listen(PORT, () => console.log(`Listening on port ${PORT}.`))

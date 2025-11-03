@@ -14,17 +14,7 @@ export class AdminController {
     }
 
     readonly getUsers = async (req: Request, res: Response) => {
-        const users = this.userDao.getUsers()
+        const users = await this.userDao.getUsers()
         res.json(users)
-    }
-
-    readonly getUserByKey = async (req: Request, res: Response) => {
-        // const user: User | null = await this.userDao.getUserByKey(api_key)
-        res.json(null)
-    }
-
-    readonly getUserByEmail = async (req: Request, res: Response) => {
-        // const user: User | null = await this.userDao.getUserByEmail(email)
-        res.json(null)
     }
 }

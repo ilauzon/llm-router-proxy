@@ -1,18 +1,18 @@
 import { Router } from 'express'
 import { AuthController } from '../controllers/authController.ts'
 import { Pool } from 'pg'
-import { requireSessionAuth } from '../middleware/authMiddleware.ts'
+import { AuthMiddleware } from '../middleware/authMiddleware.ts'
 
 const router = Router()
 
-export function createAuthRouter(dbService: Pool): Router {
+export function createAuthRouter(dbService: Pool, middleware: AuthMiddleware): Router {
     const controller = new AuthController(dbService)
     const router = Router()
     router.post("/register", controller.register)
     router.post("/login", controller.login)
     router.post("/logout", controller.logout)
-    router.post("/new-key", requireSessionAuth, controller.newApiKey)
-    router.get("/me", requireSessionAuth, controller.getMyInfo)
+    router.post("/new-key", middleware.requireSessionAuth, controller.newApiKey)
+    router.get("/me", middleware.requireSessionAuth, controller.getMyInfo)
     return router
 }
 

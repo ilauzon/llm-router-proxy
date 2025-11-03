@@ -14,6 +14,11 @@ export class UserDao {
 
     public async getUsers(): Promise<User[]> {
         const results = await this.pool.query("SELECT * FROM users")
+        for (const row of results.rows) {
+            delete row.passwordhash
+            delete row.apikeyhash
+        }
+        console.log(results.rows)
         return results.rows as User[]
     }
 
@@ -22,7 +27,10 @@ export class UserDao {
         if (results.rowCount === 0)  {
             return null
         }
-        return results.rows[0] as User
+        const result = results.rows[0]
+        delete result.passwordhash
+        delete result.apikeyhash
+        return result as User
     }
 
     public async getUserByKey(api_key: UUID): Promise<User | null> {
@@ -31,7 +39,10 @@ export class UserDao {
         if (results.rowCount === 0)  {
             return null
         }
-        return results.rows[0] as User
+        const result = results.rows[0]
+        delete result.passwordhash
+        delete result.apikeyhash
+        return result as User
     }
 
     public async getUserByEmail(email: string): Promise<User | null> {
@@ -39,7 +50,10 @@ export class UserDao {
         if (results.rowCount === 0)  {
             return null
         }
-        return results.rows[0] as User
+        const result = results.rows[0]
+        delete result.passwordhash
+        delete result.apikeyhash
+        return result as User
     }
 
     public async createUser(email: string, password: string, isAdministrator: boolean): Promise<string> {
@@ -67,7 +81,7 @@ export class UserDao {
             return false
         }
 
-        const user = results.rows[0] as User
+        const user = results.rows[0]
         return await verifyPassword(user.passwordhash, password)
     }
 }
