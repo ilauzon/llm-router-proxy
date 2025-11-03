@@ -23,7 +23,7 @@ export class AuthMiddleware {
 
         const user = await this.userDao.getUserById(req.session.userId)
         if (user === null || !user.isadministrator) {
-            res.sendStatus(403)
+            return res.sendStatus(403)
         }
         next()
     }
