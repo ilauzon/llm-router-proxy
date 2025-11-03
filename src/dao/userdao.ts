@@ -84,6 +84,16 @@ export class UserDao {
         const user = results.rows[0]
         return await verifyPassword(user.passwordhash, password)
     }
+
+    public async incrementUserRequestCount(id: number) {
+        await this.pool.query(
+            `
+            UPDATE users
+            SET requestCount = requestCount + 1
+            WHERE id = $1
+            `, [id]
+        )
+    }
 }
 
 export class DuplicateEmailError extends Error {}

@@ -7,6 +7,7 @@ import { Pool } from 'pg'
 import { UserDao } from "./dao/userdao.ts"
 import { createAuthRouter } from './routes/authRoutes.ts'
 import { AuthMiddleware } from './middleware/authMiddleware.ts';
+import { createLlmRouter } from './routes/llmRoutes.ts'
 
 
 const app: Application = express()
@@ -49,7 +50,7 @@ app.use(session({
 }))
 
 app.use("/admin", createAdminRouter(dbService, authMiddleware))
-
 app.use("/auth", createAuthRouter(dbService, authMiddleware))
+app.use("/api", createLlmRouter(dbService, authMiddleware, process.env.REMOTE_LLM_ORIGIN!, process.env.REMOTE_LLM_API_KEY!))
 
 app.listen(PORT, () => console.log(`Listening on port ${PORT}.`))

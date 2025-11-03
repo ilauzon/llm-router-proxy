@@ -1,6 +1,4 @@
 import type { Request, Response } from 'express';
-import type { User } from '../models/user.ts';
-import type { UUID } from 'node:crypto';
 import type { Pool } from 'pg';
 import { UserDao } from '../dao/userdao.ts';
 

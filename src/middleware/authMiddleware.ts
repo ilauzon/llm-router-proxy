@@ -1,5 +1,4 @@
 import type { Request, Response, NextFunction } from "express";
-import type { Pool } from "pg";
 import type { UserDao } from "../dao/userdao.ts";
 
 export class AuthMiddleware {
