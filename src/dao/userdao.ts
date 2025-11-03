@@ -1,7 +1,8 @@
-import { randomUUID, UUID } from "crypto";
-import { Pool } from "pg";
-import { User } from "../models/user";
-import { hashPassword, verifyPassword } from "../utils/hash";
+import { randomUUID } from "crypto";
+import type { UUID } from "crypto";
+import type { Pool } from "pg";
+import type { User } from "../models/user.ts";
+import { hashPassword, verifyPassword } from "../utils/hash.ts";
 
 
 export class UserDao {
@@ -12,13 +13,21 @@ export class UserDao {
     }
 
     public async getUsers(): Promise<User[]> {
-        const results = await this.pool.query("SELECT * FROM user")
+        const results = await this.pool.query("SELECT * FROM users")
         return results.rows as User[]
+    }
+
+    public async getUserById(id: number): Promise<User | null> {
+        const results = await this.pool.query("SELECT * FROM users WHERE id = $1", [id])
+        if (results.rowCount === 0)  {
+            return null
+        }
+        return results.rows[0] as User
     }
 
     public async getUserByKey(api_key: UUID): Promise<User | null> {
         const hashedApiKey = await hashPassword(api_key)
-        const results = await this.pool.query("SELECT * FROM user WHERE apiKeyHash = $1", [hashedApiKey])
+        const results = await this.pool.query("SELECT * FROM users WHERE apiKeyHash = $1", [hashedApiKey])
         if (results.rowCount === 0)  {
             return null
         }
@@ -26,35 +35,41 @@ export class UserDao {
     }
 
     public async getUserByEmail(email: string): Promise<User | null> {
-        const results = await this.pool.query("SELECT * FROM user WHERE email = $1", [email])
+        const results = await this.pool.query("SELECT * FROM users WHERE email = $1", [email])
         if (results.rowCount === 0)  {
             return null
         }
         return results.rows[0] as User
     }
 
-    public async createUser(email: string, password: string): Promise<string> {
+    public async createUser(email: string, password: string, isAdministrator: boolean): Promise<string> {
         const apiKey = randomUUID()
         const passwordHash = await hashPassword(password)
         const apiKeyHash = await hashPassword(apiKey)
-        await this.pool.query(
-            `
-            INSERT INTO user (email, passwordHash, apiKeyHash, requestCount) 
-            VALUES ($1, $2, $3, 0)
-            `,
-            [email, passwordHash, apiKeyHash]
-        )
+        try {
+            await this.pool.query(
+                `
+                INSERT INTO users (email, passwordHash, apiKeyHash, isAdministrator, requestCount) 
+                VALUES ($1, $2, $3, $4, 0)
+                `,
+                [email, passwordHash, apiKeyHash, isAdministrator]
+            )
+        } catch (err) {
+            throw new DuplicateEmailError(`Email ${email} is taken.`)
+        }
         return apiKey
     }
 
     public async verifyUser(email: string, password: string): Promise<boolean> {
-        const results = await this.pool.query("SELECT * from user WHERE email = $1", [email])
+        const results = await this.pool.query("SELECT * from users WHERE email = $1", [email])
 
         if (results.rowCount === 0)  {
             return false
         }
 
         const user = results.rows[0] as User
-        return await verifyPassword(user.passwordHash, password)
+        return await verifyPassword(user.passwordhash, password)
     }
 }
+
+export class DuplicateEmailError extends Error {}

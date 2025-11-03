@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { AdminController } from '../controllers/adminController'
+import { AdminController } from '../controllers/adminController.ts'
 import { Pool } from 'pg'
 
 export function createAdminRouter(dbService: Pool): Router {
@@ -7,6 +7,6 @@ export function createAdminRouter(dbService: Pool): Router {
     const router = Router()
     router.get("/users", controller.getUsers)
     router.get("/users/:email", controller.getUserByEmail)
-    router.get("/users/:api_key", controller.getUserByKey)
+    router.get("/users/:api-key", controller.getUserByKey)
     return router
 }

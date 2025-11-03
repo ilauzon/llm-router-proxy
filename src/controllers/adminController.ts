@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
-import { User } from '../models/user';
-import { UUID } from 'node:crypto';
-import { Pool } from 'pg';
-import { UserDao as UserDao } from '../dao/userdao';
+import type { Request, Response } from 'express';
+import type { User } from '../models/user.ts';
+import type { UUID } from 'node:crypto';
+import type { Pool } from 'pg';
+import { UserDao } from '../dao/userdao.ts';
 
 export class AdminController {
     private pool: Pool
@@ -13,18 +13,18 @@ export class AdminController {
         this.userDao = new UserDao(this.pool)
     }
 
-    public async getUsers(req: Request, res: Response): Promise<User[]> {
+    readonly getUsers = async (req: Request, res: Response) => {
         const users = this.userDao.getUsers()
-        return users
+        res.json(users)
     }
 
-    public async getUserByKey(api_key: UUID): Promise<User | null> {
-        const user: User | null = await this.userDao.getUserByKey(api_key)
-        return user
+    readonly getUserByKey = async (req: Request, res: Response) => {
+        // const user: User | null = await this.userDao.getUserByKey(api_key)
+        res.json(null)
     }
 
-    public async getUserByEmail(email: string): Promise<User | null> {
-        const user: User | null = await this.userDao.getUserByEmail(email)
-        return user
+    readonly getUserByEmail = async (req: Request, res: Response) => {
+        // const user: User | null = await this.userDao.getUserByEmail(email)
+        res.json(null)
     }
 }

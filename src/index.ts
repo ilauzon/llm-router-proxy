@@ -1,16 +1,31 @@
 import express from 'express'
 import session from 'express-session'
 import cors from 'cors'
-import type { Application, NextFunction, Request, Response } from 'express'
-import { createAdminRouter } from './routes/adminRoutes'
+import type { Application, Request, Response, NextFunction, Errback } from 'express'
+import { createAdminRouter } from './routes/adminRoutes.ts'
 import { Pool } from 'pg'
-import { UserDao } from './dao/userdao'
-import { UUID } from 'crypto'
+import { UserDao } from "./dao/userdao.ts"
+import { createAuthRouter } from './routes/authRoutes.ts'
+
 
 const app: Application = express()
 const PORT = process.env.PORT || 3000
-const dbService: Pool = new Pool()
+const dbService: Pool = new Pool({
+    user: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD,
+    host: 'localhost',
+    port: 5432,
+    database: process.env.POSTGRES_DATABASE,
+    max: 20,
+})
+
 const userDao: UserDao = new UserDao(dbService)
+
+try {
+    await userDao.createUser(process.env.ADMIN_USERNAME!, process.env.ADMIN_PASSWORD!, true)
+} catch (error) {
+    console.log(`user '${process.env.ADMIN_USERNAME}' already exists. Skipping creation.`)
+}
 
 app.use(express.json())
 
@@ -19,6 +34,7 @@ const corsOptions = {
     origin: '*'
 }
 
+app.set('trust proxy', 1)
 app.use(cors(corsOptions))
 app.use(session({
     secret: process.env.SESSION_COOKIE_SALT!,
@@ -32,8 +48,6 @@ app.use(session({
 
 app.use("/admin", createAdminRouter(dbService))
 
-app.use("/service")
+app.use("/auth", createAuthRouter(dbService))
 
-app.get("/", (req: Request, res: Response) => {
-
-})
+app.listen(PORT, () => console.log(`Listening on port ${PORT}.`))

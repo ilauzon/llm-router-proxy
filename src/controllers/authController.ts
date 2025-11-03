@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express'
-import { User } from '../models/user';
-import { Pool } from 'pg';
-import { UserDao } from '../dao/userdao';
+import type { User } from '../models/user.ts';
+import type { Pool } from 'pg';
+import { DuplicateEmailError, UserDao } from '../dao/userdao.ts';
 
 export class AuthController {
     private userDao: UserDao
@@ -10,13 +10,22 @@ export class AuthController {
         this.userDao = new UserDao(pool)
     }
 
-    public async register(req: Request, res: Response) {
+    readonly register = async (req: Request, res: Response) => {
         const { email, password } = req.body
-        const apiKey = await this.userDao.createUser(email, password)
+        let apiKey: string;
+        try {
+            apiKey = await this.userDao.createUser(email, password, false)
+        } catch (err) {
+            if (err instanceof DuplicateEmailError) {
+                return res.status(409).send(err.message)
+            } else {
+                throw err
+            }
+        }
         return res.json({ apiKey: apiKey })
     }
     
-    public async login(req: Request, res: Response) {
+    readonly login = async (req: Request, res: Response) => {
         const { email, password } = req.body
         const success = await this.userDao.verifyUser(email, password)
         if (success) {
@@ -28,7 +37,7 @@ export class AuthController {
         }
     }
 
-    public async logout(req: Request, res: Response) {
+    readonly logout = async (req: Request, res: Response) => {
         req.session.destroy(err => {
             if (err) {
                 return res.status(500).send("Logout failed")
@@ -38,13 +47,13 @@ export class AuthController {
         })
     }
 
-    public async newApiKey(req: Request, res: Response) {
-        // authenticate user
+    readonly newApiKey = async (req: Request, res: Response) => {
         throw new Error("Not implemented")
     }
 
-    public async getMyInfo(req: Request, res: Response): Promise<User> {
-        // authenticate user
-        throw new Error("Not implemented")
+    readonly getMyInfo = async (req: Request, res: Response) => {
+        const user = await this.userDao.getUserById(req.session.userId!)
+        if (!user) return res.status(404).send("User not found")
+        res.json(user)
     }
 }

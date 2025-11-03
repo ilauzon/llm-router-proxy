@@ -1,7 +1,8 @@
 export interface User {
     id: number,
     email: string,
-    passwordHash: string,
-    apiKeyHash: string,
+    passwordhash: string,
+    apikeyhash: string,
+    isadministrator: boolean,
     requestCount: number,
 }
