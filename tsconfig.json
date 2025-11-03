@@ -1,0 +1,17 @@
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "extends": ["@tsconfig/node22/tsconfig.json", "@tsconfig/node-ts/tsconfig.json"],
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "strict": true,
+    "jsx": "react-jsx",
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "verbatimModuleSyntax": false,
+  }
+}
