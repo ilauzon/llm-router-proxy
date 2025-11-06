@@ -32,18 +32,29 @@ try {
 
 app.use(express.json())
 
-const corsOptions = {
-    credentials: true,
-    origin: '*'
-}
-
 app.set('trust proxy', 1)
-app.use(cors(corsOptions))
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const allowedOrigins = ['https://ranveerrai.ca', 'http://localhost:8888', 'http://localhost:8889']
+  const defaultOrigin = 'https://ranveerrai.ca'
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+       res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.header('Access-Control-Allow-Origin', defaultOrigin);
+  }
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Origin, Authentication');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  return next();
+});
+
 app.use(session({
     secret: process.env.SESSION_COOKIE_SALT!,
     saveUninitialized: false,
     resave: false,
     cookie: {
+        sameSite: 'none',
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
     },
