@@ -28,7 +28,8 @@ export class LlmController {
             }
         })
         if (response.ok) {
-            this.userDao.incrementUserRequestCount(req.session.userId!)
+            const user = await this.userDao.getUserByKey(req.apiKey!)
+            this.userDao.incrementUserRequestCount(user!.id)
             const data = await response.json()
             return res.json(data)
         } else {

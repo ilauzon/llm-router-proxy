@@ -40,6 +40,7 @@ export class AuthMiddleware {
         if (user === null) {
             return res.status(401).send("Token invalid")
         }
+        req.apiKey = token as UUID; 
         next()
     }
 }
