@@ -15,10 +15,10 @@ RUN npm install
 COPY . .
 
 # Set PORT environment variable
-ENV PORT=3000
+ENV PORT=8111
 
 # Expose the port the app runs on
-EXPOSE 3000
+EXPOSE 8111
 
 # Start the application
 # Use "npm start" or the appropriate command defined in package.json

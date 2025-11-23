@@ -16,7 +16,7 @@ import { swaggerSpec, swaggerUi } from './swagger/swagger.ts'
 
 const app: Application = express()
 const api = express.Router()
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 8111
 const dbService: Pool = new Pool({
     user: process.env.POSTGRES_USER,
     password: process.env.POSTGRES_PASSWORD,
