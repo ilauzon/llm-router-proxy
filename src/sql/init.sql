@@ -3,9 +3,13 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT NOT NULL UNIQUE,
     passwordHash TEXT NOT NULL,
     apiKeyHash TEXT NOT NULL,
-    isAdministrator BOOLEAN NOT NULL,
-    requestCount INTEGER NOT NULL DEFAULT 0
+    isAdministrator BOOLEAN NOT NULL
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_user_email ON users (email);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_user_api_key ON users (apiKeyHash);
+
+CREATE TABLE IF NOT EXISTS user_api_usages (
+    id INT PRIMARY KEY REFERENCES users(id),
+    requestCount INTEGER NOT NULL DEFAULT 0
+);

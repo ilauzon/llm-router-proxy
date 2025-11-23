@@ -13,7 +13,12 @@ export class UserDao {
     }
 
     public async getUsers(): Promise<User[]> {
-        const results = await this.pool.query("SELECT * FROM users")
+        const results = await this.pool.query(`
+            SELECT u.id, u.email, u.isAdministrator, ua.requestCount 
+            FROM users AS u
+            LEFT JOIN user_api_usages AS ua ON u.id = ua.id
+            `
+            )
         for (const row of results.rows) {
             delete row.passwordhash
             delete row.apikeyhash
@@ -22,7 +27,14 @@ export class UserDao {
     }
 
     public async getUserById(id: number): Promise<User | null> {
-        const results = await this.pool.query("SELECT * FROM users WHERE id = $1", [id])
+        const results = await this.pool.query(`
+            SELECT u.id, u.email, u.isAdministrator, ua.requestCount 
+            FROM users AS u
+            LEFT JOIN user_api_usages AS ua ON u.id = ua.id
+            WHERE u.id = $1
+            `, 
+            [id]
+        )
         if (results.rowCount === 0)  {
             return null
         }
@@ -34,7 +46,14 @@ export class UserDao {
 
     public async getUserByKey(apiKey: UUID): Promise<User | null> {
         const hashedApiKey = hashApiKey(apiKey)
-        const results = await this.pool.query("SELECT * FROM users WHERE apiKeyHash = $1", [hashedApiKey])
+        const results = await this.pool.query(`
+            SELECT u.id, u.email, u.isAdministrator, ua.requestCount 
+            FROM users AS u
+            LEFT JOIN user_api_usages AS ua ON u.id = ua.id
+            WHERE apiKeyHash = $1
+            `, 
+            [hashedApiKey]
+        )
         if (results.rowCount === 0)  {
             return null
         }
@@ -45,7 +64,16 @@ export class UserDao {
     }
 
     public async getUserByEmail(email: string): Promise<User | null> {
-        const results = await this.pool.query("SELECT * FROM users WHERE email = $1", [email])
+        const results = await this.pool.query(
+            `
+            SELECT u.id, u.email, u.isAdministrator, ua.requestCount 
+            FROM users AS u
+            LEFT JOIN user_api_usages AS ua ON u.id = ua.id
+            WHERE email = $1
+            `, 
+            [email]
+        )
+
         if (results.rowCount === 0)  {
             return null
         }
@@ -59,22 +87,43 @@ export class UserDao {
         const apiKey = randomUUID()
         const passwordHash = await hashPassword(password)
         const apiKeyHash = hashApiKey(apiKey)
+        const client = await this.pool.connect()
         try {
-            await this.pool.query(
+            await client.query("BEGIN")
+            const result = await client.query(
                 `
-                INSERT INTO users (email, passwordHash, apiKeyHash, isAdministrator, requestCount) 
-                VALUES ($1, $2, $3, $4, 0)
+                INSERT INTO users (email, passwordHash, apiKeyHash, isAdministrator) 
+                VALUES ($1, $2, $3, $4)
+                RETURNING id
                 `,
                 [email, passwordHash, apiKeyHash, isAdministrator]
             )
+            const newId = result.rows[0].id
+            await client.query(
+                `
+                INSERT INTO user_api_usages (id, requestCount)
+                VALUES ($1, $2)
+                `,
+                [newId, 0]
+            )
+            await client.query("COMMIT")
         } catch (err) {
+            await client.query("ROLLBACK")
+            console.error(err)
             throw new DuplicateEmailError(`Email ${email} is taken.`)
+        } finally {
+            client.release()
         }
         return apiKey
     }
 
     public async verifyUser(email: string, password: string): Promise<boolean> {
-        const results = await this.pool.query("SELECT * from users WHERE email = $1", [email])
+        const results = await this.pool.query(
+            `
+            SELECT * from users WHERE email = $1
+            `, 
+            [email]
+        )
 
         if (results.rowCount === 0)  {
             return false
@@ -87,7 +136,7 @@ export class UserDao {
     public async incrementUserRequestCount(id: number) {
         await this.pool.query(
             `
-            UPDATE users
+            UPDATE user_api_usages
             SET requestCount = requestCount + 1
             WHERE id = $1
             `, [id]
