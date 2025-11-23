@@ -28,7 +28,7 @@ const userDao: UserDao = new UserDao(dbService)
 const metricsDao: MetricsDao = new MetricsDao(dbService)
 const promptDao: PromptDao = new PromptDao(dbService)
 const jwtService: JwtService = new JwtService(process.env.JWT_SECRET!, process.env.REFRESH_SECRET!)
-const authMiddleware: AuthMiddleware = new AuthMiddleware(userDao)
+const authMiddleware: AuthMiddleware = new AuthMiddleware(userDao, metricsDao)
 
 try {
     await userDao.createUser(process.env.ADMIN_USERNAME!, process.env.ADMIN_PASSWORD!, true)
@@ -40,6 +40,9 @@ app.use(express.json())
 
 app.set('trust proxy', 1)
 
+/**
+ * CORS
+ */
 app.use((req: Request, res: Response, next: NextFunction) => {
   const allowedOrigins = ['https://ranveerrai.ca', 'http://localhost:8888', 'http://localhost:8889']
   const defaultOrigin = 'https://ranveerrai.ca'
@@ -56,14 +59,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use(cookieParser())
-
-/**
- * Collect usage metrics.
- */
-app.use(async (req: Request, res: Response, next: NextFunction) => {
-    await metricsDao.submitOrUpdateMetric(req)
-    next()
-})
 
 /**
  * Set req.userId if the user has provided a valid access token.

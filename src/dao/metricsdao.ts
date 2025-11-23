@@ -12,8 +12,9 @@ export class MetricsDao {
     readonly getMetrics = async (): Promise<any[]> => {
         const results = await this.pool.query(
             `
-            SELECT *
+            SELECT method, endpoint, SUM(requestCount) AS requests
             FROM activity_metrics
+            GROUP BY (method, endpoint)
             `
         )
         const metrics = results.rows
@@ -25,16 +26,17 @@ export class MetricsDao {
 
     readonly submitOrUpdateMetric = async (req: Request) => {
         const method = req.method
-        const endpoint = req.path
+        const endpoint = req.originalUrl
+        const user_id = req.userId
         await this.pool.query(
             `
-            INSERT INTO activity_metrics (method, endpoint)
-            VALUES ($1, $2)
-            ON CONFLICT (method, endpoint)
+            INSERT INTO activity_metrics (method, endpoint, userid)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (method, endpoint, userid)
                 DO UPDATE SET
                 requestCount = activity_metrics.requestCount + 1
             `,
-            [method, endpoint]
+            [method, endpoint, user_id]
         )
     }
 }

@@ -1,21 +1,29 @@
 import type { Request, Response, NextFunction } from "express";
 import type { UserDao } from "../dao/userdao.ts";
 import type { UUID } from "crypto";
+import type { MetricsDao } from "../dao/metricsdao.ts";
 
 export class AuthMiddleware {
     private userDao: UserDao
+    private metricsDao: MetricsDao
 
-    constructor(userDao: UserDao) {
+    constructor(userDao: UserDao, metricsDao: MetricsDao) {
         this.userDao = userDao
+        this.metricsDao = metricsDao
     }
 
     /**
      * @returns 401 if the user is not authenticated.
      */
     readonly requireSessionAuth = (req: Request, res: Response, next: NextFunction) => {
+
         if (!req.userId) {
             return res.status(401).send("Not signed in.")
         }
+
+        // track usage metrics for signed-in users
+        this.metricsDao.submitOrUpdateMetric(req)
+
         next()
     }
 
@@ -26,6 +34,9 @@ export class AuthMiddleware {
         if (!req.userId) {
             return res.status(401).send("Not signed in.")
         }
+
+        // track usage metrics for signed-in users
+        this.metricsDao.submitOrUpdateMetric(req)
 
         const user = await this.userDao.getUserById(req.userId)
 
