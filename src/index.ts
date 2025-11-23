@@ -1,6 +1,5 @@
 import express from 'express'
-import session from 'express-session'
-import cors from 'cors'
+import cookieParser from 'cookie-parser'
 import type { Application, Request, Response, NextFunction, Errback } from 'express'
 import { createAdminRouter } from './routes/adminRoutes.ts'
 import { Pool } from 'pg'
@@ -8,6 +7,7 @@ import { UserDao } from "./dao/userdao.ts"
 import { createAuthRouter } from './routes/authRoutes.ts'
 import { AuthMiddleware } from './middleware/authMiddleware.ts';
 import { createLlmRouter } from './routes/llmRoutes.ts'
+import { JwtService } from "./services/jwtservice.ts"
 
 
 const app: Application = express()
@@ -22,6 +22,7 @@ const dbService: Pool = new Pool({
 })
 
 const userDao: UserDao = new UserDao(dbService)
+const jwtService: JwtService = new JwtService(process.env.JWT_SECRET!, process.env.REFRESH_SECRET!)
 const authMiddleware: AuthMiddleware = new AuthMiddleware(userDao)
 
 try {
@@ -49,19 +50,33 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   return next();
 });
 
-app.use(session({
-    secret: process.env.SESSION_COOKIE_SALT!,
-    saveUninitialized: false,
-    resave: false,
-    cookie: {
-        sameSite: 'none',
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-    },
-}))
+app.use(cookieParser())
+
+/**
+ * Set req.userId if the user has provided a valid access token.
+ */
+app.use((req: Request, res: Response, next: NextFunction) => {
+    const accessToken = req.cookies["accessToken"]
+
+    if (!accessToken) {
+        next()
+        return
+    }
+
+    const userId = jwtService.verify(accessToken)
+
+    if (userId === null) {
+        next()
+        return
+    }
+
+    req.userId = userId
+    
+    next()
+})
 
 app.use("/admin", createAdminRouter(dbService, authMiddleware))
-app.use("/auth", createAuthRouter(dbService, authMiddleware))
+app.use("/auth", createAuthRouter(dbService, jwtService, authMiddleware))
 app.use("/api", createLlmRouter(dbService, authMiddleware, process.env.REMOTE_LLM_ORIGIN!, process.env.REMOTE_LLM_API_KEY!))
 
 app.listen(PORT, () => console.log(`Listening on port ${PORT}.`))

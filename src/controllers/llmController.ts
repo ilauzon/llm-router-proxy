@@ -1,5 +1,4 @@
 import { UserDao } from "../dao/userdao.ts";
-import session from 'express-session';
 import type { Request, Response } from 'express';
 import type { Pool } from "pg";
 

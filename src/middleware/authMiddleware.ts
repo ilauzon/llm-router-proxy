@@ -9,25 +9,40 @@ export class AuthMiddleware {
         this.userDao = userDao
     }
 
+    /**
+     * @returns 401 if the user is not authenticated.
+     */
     readonly requireSessionAuth = (req: Request, res: Response, next: NextFunction) => {
-        if (!req.session.userId) {
-            return res.sendStatus(401)
+        if (!req.userId) {
+            return res.status(401).send("Not signed in.")
         }
         next()
     }
 
+    /**
+     * @returns 401 if the user is not authenticated, 403 if the user is not an administrator.
+     */
     readonly requireAdminSessionAuth = async (req: Request, res: Response, next: NextFunction) => {
-        if (!req.session.userId) {
-            return res.sendStatus(401)
+        if (!req.userId) {
+            return res.status(401).send("Not signed in.")
         }
 
-        const user = await this.userDao.getUserById(req.session.userId)
-        if (user === null || !user.isadministrator) {
-            return res.sendStatus(403)
+        const user = await this.userDao.getUserById(req.userId)
+
+        if (user === null) {
+            return res.status(401).send(`User with ID ${req.userId} not found.`)
         }
+
+        if (!user.isadministrator) {
+            return res.status(403).send("Not an administrator.")
+        }
+
         next()
     }
 
+    /**
+     * @returns 401 if the user did not provide a valid bearer token in the `Authorization` header.
+     */
     readonly requireApiKeyAuth = async (req: Request, res: Response, next: NextFunction) => {
         const authHeader = req.headers['authorization'];
         const token = authHeader && authHeader.split(' ')[1]; // Extract token after 'Bearer'
