@@ -14,13 +14,11 @@ services:
       # Points to src/sql based on the file structure of this project
       - ./src/sql:/docker-entrypoint-initdb.d
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
 
   app: 
     build: .
     ports: 
-      - "3000:3000" # change left side if we want a different localhost port
+      - "127.0.0.1:3000:3000" # change left side if we want a different localhost port
     depends_on:
       - db
     environment:

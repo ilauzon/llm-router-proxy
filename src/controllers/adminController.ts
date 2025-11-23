@@ -1,18 +1,29 @@
 import type { Request, Response } from 'express';
 import type { Pool } from 'pg';
 import { UserDao } from '../dao/userdao.ts';
+import type { MetricsDao } from '../dao/metricsdao.ts';
 
 export class AdminController {
-    private pool: Pool
     private userDao: UserDao
+    private metricsDao: MetricsDao
 
-    constructor(pool: Pool) {
-        this.pool = pool
-        this.userDao = new UserDao(this.pool)
+    constructor(userDao: UserDao, metricsDao: MetricsDao) {
+        this.userDao = userDao
+        this.metricsDao = metricsDao
     }
 
     readonly getUsers = async (req: Request, res: Response) => {
         const users = await this.userDao.getUsers()
         res.json(users)
+    }
+
+    readonly getUsageMetrics = async (req: Request, res: Response) => {
+        const metrics = await this.metricsDao.getMetrics()
+        res.json(metrics)
+    }
+
+    readonly getUsageMetricsPerUser = async (req: Request, res: Response) => {
+        const metrics = await this.metricsDao.getMetricsByUser()
+        res.json(metrics)
     }
 }

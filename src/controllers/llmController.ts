@@ -1,5 +1,4 @@
 import { UserDao } from "../dao/userdao.ts";
-import session from 'express-session';
 import type { Request, Response } from 'express';
 import type { Pool } from "pg";
 
@@ -28,9 +27,16 @@ export class LlmController {
             }
         })
         if (response.ok) {
-            const user = await this.userDao.getUserByKey(req.apiKey!)
+            let user = (await this.userDao.getUserByKey(req.apiKey!))!
             this.userDao.incrementUserRequestCount(user!.id)
-            const data = await response.json()
+            const requestCount = user.requestcount + 1
+
+            const data = (await response.json()) as { prompt: string, response: string, warning?: string }
+
+            if (requestCount > 20) {
+                data.warning = `API limit exceeded, request ${requestCount} out of 20`
+            }
+
             return res.json(data)
         } else {
             console.error(response.status, response.body)
