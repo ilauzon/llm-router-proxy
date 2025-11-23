@@ -18,7 +18,7 @@ services:
   app: 
     build: .
     ports: 
-      - "127.0.0.1:3000:3000" # change left side if we want a different localhost port
+      - "127.0.0.1:8111:8111" # change left side if we want a different localhost port
     depends_on:
       - db
     environment:
