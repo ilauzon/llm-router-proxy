@@ -10,6 +10,7 @@ import { createLlmRouter } from './routes/llmRoutes.ts'
 import { JwtService } from "./services/jwtservice.ts"
 import { createPromptRouter } from './routes/promptRoutes.ts'
 import { PromptDao } from "./dao/promptdao.ts"
+import { MetricsDao } from "./dao/metricsdao.ts"
 
 
 const app: Application = express()
@@ -24,6 +25,7 @@ const dbService: Pool = new Pool({
 })
 
 const userDao: UserDao = new UserDao(dbService)
+const metricsDao: MetricsDao = new MetricsDao(dbService)
 const promptDao: PromptDao = new PromptDao(dbService)
 const jwtService: JwtService = new JwtService(process.env.JWT_SECRET!, process.env.REFRESH_SECRET!)
 const authMiddleware: AuthMiddleware = new AuthMiddleware(userDao)
@@ -56,6 +58,14 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use(cookieParser())
 
 /**
+ * Collect usage metrics.
+ */
+app.use(async (req: Request, res: Response, next: NextFunction) => {
+    await metricsDao.submitOrUpdateMetric(req)
+    next()
+})
+
+/**
  * Set req.userId if the user has provided a valid access token.
  */
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -68,7 +78,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
     const payload = jwtService.verify(accessToken)
 
-    if (payload=== null) {
+    if (payload === null) {
         next()
         return
     }
@@ -79,7 +89,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     next()
 })
 
-app.use("/admin", createAdminRouter(dbService, authMiddleware))
+app.use("/admin", createAdminRouter(userDao, metricsDao, authMiddleware))
 app.use("/auth", createAuthRouter(dbService, jwtService, authMiddleware))
 app.use("/api", createLlmRouter(dbService, authMiddleware, process.env.REMOTE_LLM_ORIGIN!, process.env.REMOTE_LLM_API_KEY!))
 app.use("/prompts", createPromptRouter(promptDao, authMiddleware))
