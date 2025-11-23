@@ -15,6 +15,7 @@ export const createAuthRouter = (dbService: Pool, jwtService: JwtService, middle
     router.post("/logout", controller.logout)
     router.post("/new-key", middleware.requireSessionAuth, controller.newApiKey)
     router.get("/me", middleware.requireSessionAuth, controller.getMyInfo)
+    router.post("/new-username", middleware.requireSessionAuth, controller.changeUsername)
     return router
 }
 

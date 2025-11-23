@@ -18,9 +18,19 @@ export class MetricsDao {
             `
         )
         const metrics = results.rows
-        for (const metric of metrics) {
-            delete metric.id
-        }
+        return metrics
+    }
+
+    readonly getMetricsByUser = async (): Promise<any[]> => {
+        const results = await this.pool.query(
+            `
+            SELECT u.username, u.email, sum(requestCount)
+            FROM activity_metrics AS am
+            LEFT JOIN users AS u ON u.id = am.userid
+            GROUP BY (u.username, u.email)
+            `
+        )
+        const metrics = results.rows
         return metrics
     }
 

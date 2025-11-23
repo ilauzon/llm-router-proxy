@@ -14,7 +14,7 @@ export class UserDao {
 
     public readonly getUsers = async (): Promise<User[]> => {
         const results = await this.pool.query(`
-            SELECT u.id, u.email, u.isAdministrator, ua.requestCount 
+            SELECT u.id, u.email, u.username, u.isAdministrator, ua.requestCount 
             FROM users AS u
             LEFT JOIN user_api_usages AS ua ON u.id = ua.id
             `
@@ -28,7 +28,7 @@ export class UserDao {
 
     public readonly getUserById = async (id: number): Promise<User | null> => {
         const results = await this.pool.query(`
-            SELECT u.id, u.email, u.isAdministrator, ua.requestCount 
+            SELECT u.id, u.email, u.username, u.isAdministrator, ua.requestCount 
             FROM users AS u
             LEFT JOIN user_api_usages AS ua ON u.id = ua.id
             WHERE u.id = $1
@@ -47,7 +47,7 @@ export class UserDao {
     public readonly getUserByKey = async (apiKey: UUID): Promise<User | null> => {
         const hashedApiKey = hashApiKey(apiKey)
         const results = await this.pool.query(`
-            SELECT u.id, u.email, u.isAdministrator, ua.requestCount 
+            SELECT u.id, u.email, u.username, u.isAdministrator, ua.requestCount 
             FROM users AS u
             LEFT JOIN user_api_usages AS ua ON u.id = ua.id
             WHERE apiKeyHash = $1
@@ -66,7 +66,7 @@ export class UserDao {
     public readonly getUserByEmail = async (email: string): Promise<User | null> => {
         const results = await this.pool.query(
             `
-            SELECT u.id, u.email, u.isAdministrator, ua.requestCount 
+            SELECT u.id, u.email, u.username, u.isAdministrator, ua.requestCount 
             FROM users AS u
             LEFT JOIN user_api_usages AS ua ON u.id = ua.id
             WHERE email = $1
@@ -83,20 +83,33 @@ export class UserDao {
         return result as User
     }
 
+    /**
+     * @throws {DuplicateEmailError} When the email is already taken.
+     * @throws {InvalidEmailFormatError} When the email is not in a valid email format.
+     */
     public readonly createUser = async (email: string, password: string, isAdministrator: boolean): Promise<string> => {
         const apiKey = randomUUID()
         const passwordHash = await hashPassword(password)
         const apiKeyHash = hashApiKey(apiKey)
+    
+        if (!this.isEmail(email)) {
+            throw new InvalidEmailFormatError("Invalid email format.")
+        }
+
+        const uuid = crypto.randomUUID();
+        const username = `${email.split('@')[0]}-${uuid}`;
+
+
         const client = await this.pool.connect()
         try {
             await client.query("BEGIN")
             const result = await client.query(
                 `
-                INSERT INTO users (email, passwordHash, apiKeyHash, isAdministrator) 
-                VALUES ($1, $2, $3, $4)
+                INSERT INTO users (email, passwordHash, apiKeyHash, isAdministrator, username) 
+                VALUES ($1, $2, $3, $4, $5)
                 RETURNING id
                 `,
-                [email, passwordHash, apiKeyHash, isAdministrator]
+                [email, passwordHash, apiKeyHash, isAdministrator, username]
             )
             const newId = result.rows[0].id
             await client.query(
@@ -109,7 +122,12 @@ export class UserDao {
             await client.query("COMMIT")
         } catch (err) {
             await client.query("ROLLBACK")
-            throw new DuplicateEmailError(`Email ${email} is taken.`)
+            if ((err as { code: string }).code === '23505') {
+                throw new DuplicateEmailError(`Email ${email} is taken.`)
+            } else {
+                throw err
+            }
+
         } finally {
             client.release()
         }
@@ -141,6 +159,36 @@ export class UserDao {
             `, [id]
         )
     }
+
+    /**
+     * @throws {DuplicateUsernameError}
+     */
+    public readonly changeUsername = async (id: number, username: string) => {
+        try {
+            await this.pool.query(
+                `
+                UPDATE users
+                SET username = $2
+                WHERE id = $1
+                `, [id, username]
+            )
+        } catch (err) {
+            if ((err as { code: string }).code === '23505') {
+                throw new DuplicateUsernameError(`Username ${username} is taken.`)
+            } else {
+                throw err
+            }
+
+        }
+    }
+
+    private readonly isEmail = (email: string): boolean => {
+        const emailFormat = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
+        if (email !== '' && email.match(emailFormat)) { return true; }
+        return false;
+    }
 }
 
 export class DuplicateEmailError extends Error {}
+export class InvalidEmailFormatError extends Error {}
+export class DuplicateUsernameError extends Error {}

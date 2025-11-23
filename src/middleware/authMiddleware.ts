@@ -22,7 +22,7 @@ export class AuthMiddleware {
         }
 
         // track usage metrics for signed-in users
-        this.metricsDao.submitOrUpdateMetric(req)
+        this.metricsDao.submitOrUpdateMetric(req).catch(e => console.error(e))
 
         next()
     }
@@ -35,9 +35,6 @@ export class AuthMiddleware {
             return res.status(401).send("Not signed in.")
         }
 
-        // track usage metrics for signed-in users
-        this.metricsDao.submitOrUpdateMetric(req)
-
         const user = await this.userDao.getUserById(req.userId)
 
         if (user === null) {
@@ -47,6 +44,9 @@ export class AuthMiddleware {
         if (!user.isadministrator) {
             return res.status(403).send("Not an administrator.")
         }
+
+        // track usage metrics for signed-in users
+        this.metricsDao.submitOrUpdateMetric(req).catch(e => console.error(e))
 
         next()
     }

@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express'
 import type { Pool } from 'pg';
-import { DuplicateEmailError, UserDao } from '../dao/userdao.ts';
+import { DuplicateEmailError, DuplicateUsernameError, InvalidEmailFormatError, UserDao } from '../dao/userdao.ts';
 import type { JwtService } from '../services/jwtservice.ts';
 import { ref } from 'process';
 
@@ -23,6 +23,8 @@ export class AuthController {
         } catch (err) {
             if (err instanceof DuplicateEmailError) {
                 return res.status(409).send(err.message)
+            } else if (err instanceof InvalidEmailFormatError) {
+                return res.status(400).send(err.message)
             } else {
                 throw err
             }
@@ -77,5 +79,22 @@ export class AuthController {
         const user = await this.userDao.getUserById(req.userId!)
         if (!user) return res.status(404).send("User not found")
         return res.json(user)
+    }
+
+    readonly changeUsername = async (req: Request, res: Response) => {
+        const username = req.body["username"]
+        if (typeof username !== "string") {
+            return res.status(400).send("Username must be a string.")
+        }
+        try {
+            await this.userDao.changeUsername(req.userId!, username)
+        } catch (err) {
+            if (err instanceof DuplicateUsernameError) {
+                return res.status(409).send(err.message)
+            } else {
+                throw err
+            }
+        }
+        return res.sendStatus(204)
     }
 }

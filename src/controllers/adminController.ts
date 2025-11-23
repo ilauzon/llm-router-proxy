@@ -21,4 +21,9 @@ export class AdminController {
         const metrics = await this.metricsDao.getMetrics()
         res.json(metrics)
     }
+
+    readonly getUsageMetricsPerUser = async (req: Request, res: Response) => {
+        const metrics = await this.metricsDao.getMetricsByUser()
+        res.json(metrics)
+    }
 }

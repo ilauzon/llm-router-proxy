@@ -10,5 +10,6 @@ export const createAdminRouter = (userDao: UserDao, metricsDao: MetricsDao, midd
     const router = Router()
     router.get("/users", middleware.requireAdminSessionAuth, controller.getUsers)
     router.get("/metrics", middleware.requireAdminSessionAuth, controller.getUsageMetrics)
+    router.get("/user-metrics", middleware.requireAdminSessionAuth, controller.getUsageMetricsPerUser)
     return router
 }
