@@ -12,7 +12,7 @@ export class UserDao {
         this.pool = pool
     }
 
-    public async getUsers(): Promise<User[]> {
+    public readonly getUsers = async (): Promise<User[]> => {
         const results = await this.pool.query(`
             SELECT u.id, u.email, u.isAdministrator, ua.requestCount 
             FROM users AS u
@@ -26,7 +26,7 @@ export class UserDao {
         return results.rows as User[]
     }
 
-    public async getUserById(id: number): Promise<User | null> {
+    public readonly getUserById = async (id: number): Promise<User | null> => {
         const results = await this.pool.query(`
             SELECT u.id, u.email, u.isAdministrator, ua.requestCount 
             FROM users AS u
@@ -44,7 +44,7 @@ export class UserDao {
         return result as User
     }
 
-    public async getUserByKey(apiKey: UUID): Promise<User | null> {
+    public readonly getUserByKey = async (apiKey: UUID): Promise<User | null> => {
         const hashedApiKey = hashApiKey(apiKey)
         const results = await this.pool.query(`
             SELECT u.id, u.email, u.isAdministrator, ua.requestCount 
@@ -63,7 +63,7 @@ export class UserDao {
         return result as User
     }
 
-    public async getUserByEmail(email: string): Promise<User | null> {
+    public readonly getUserByEmail = async (email: string): Promise<User | null> => {
         const results = await this.pool.query(
             `
             SELECT u.id, u.email, u.isAdministrator, ua.requestCount 
@@ -83,7 +83,7 @@ export class UserDao {
         return result as User
     }
 
-    public async createUser(email: string, password: string, isAdministrator: boolean): Promise<string> {
+    public readonly createUser = async (email: string, password: string, isAdministrator: boolean): Promise<string> => {
         const apiKey = randomUUID()
         const passwordHash = await hashPassword(password)
         const apiKeyHash = hashApiKey(apiKey)
@@ -109,7 +109,6 @@ export class UserDao {
             await client.query("COMMIT")
         } catch (err) {
             await client.query("ROLLBACK")
-            console.error(err)
             throw new DuplicateEmailError(`Email ${email} is taken.`)
         } finally {
             client.release()
@@ -117,7 +116,7 @@ export class UserDao {
         return apiKey
     }
 
-    public async verifyUser(email: string, password: string): Promise<boolean> {
+    public readonly verifyUser = async (email: string, password: string): Promise<boolean> => {
         const results = await this.pool.query(
             `
             SELECT * from users WHERE email = $1
@@ -133,7 +132,7 @@ export class UserDao {
         return await verifyPassword(user.passwordhash, password)
     }
 
-    public async incrementUserRequestCount(id: number) {
+    public readonly incrementUserRequestCount = async (id: number) => {
         await this.pool.query(
             `
             UPDATE user_api_usages

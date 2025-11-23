@@ -1,5 +1,6 @@
 import e from 'express';
 import jwt from 'jsonwebtoken';
+const { TokenExpiredError } = jwt;
 
 
 export class JwtService {
@@ -16,19 +17,20 @@ export class JwtService {
     /**
      * Verify the given access token.
      * @param accessToken 
-     * @returns the user's ID if the token is valid, null if otherwise.
+     * @returns the user's information if the token is valid, null if otherwise.
      */
-    readonly verify = (accessToken: string): number | null => {
-        let userId: number;
+    readonly verify = (accessToken: string): { userId: number, isAdministrator: boolean } | null => {
+        let payload;
         try {
-            const payload = jwt.verify(accessToken, this.accessSecret) as jwt.JwtPayload
-            userId = payload["userId"]
+            payload = jwt.verify(accessToken, this.accessSecret) as jwt.JwtPayload
         } catch (err) {
-            console.error(err)
+            if (!(err instanceof TokenExpiredError)) {
+                console.error(err)
+            }
             return null
         }
 
-        return userId
+        return payload as { userId: number, isAdministrator: boolean } 
     }
 
     /**
@@ -38,10 +40,9 @@ export class JwtService {
      * @returns The access token if the refresh token is valid, otherwise null.
      */
     readonly refresh = (refreshToken: string): string | null => {
-        let userId: number;
+        let payload;
         try {
-            const payload = jwt.verify(refreshToken, this.refreshSecret) as jwt.JwtPayload
-            userId = payload["userId"]
+            payload = jwt.verify(refreshToken, this.refreshSecret) as jwt.JwtPayload
         } catch (err) {
             console.error(err)
             return null
@@ -52,7 +53,7 @@ export class JwtService {
         }
 
         const newAccessToken = jwt.sign(
-            { "userId": userId },
+            payload,
             this.accessSecret, 
             {expiresIn: '15m'},
         )
@@ -72,11 +73,12 @@ export class JwtService {
     /**
      * Get a new refresh token for the given user.
      * @param userId The ID of the user to sign.
+     * @param isAdministrator True if the user is an administrator, false otherwise.
      * @returns the new refresh token.
      */
-    readonly getNewRefreshToken = (userId: number): string => {
+    readonly getNewRefreshToken = (userId: number, isAdministrator: boolean): string => {
         const newRefreshToken = jwt.sign(
-            { "userId": userId },
+            { "userId": userId, "isAdministrator": isAdministrator },
             this.refreshSecret, 
         )
 

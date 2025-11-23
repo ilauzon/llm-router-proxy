@@ -35,8 +35,7 @@ export class AuthController {
         const success = await this.userDao.verifyUser(email, password)
         if (success) {
             const user = (await this.userDao.getUserByEmail(email))!
-            const userId = user.id
-            const refreshToken = this.jwtService.getNewRefreshToken(userId)
+            const refreshToken = this.jwtService.getNewRefreshToken(user.id, user.isadministrator)
             const accessToken = this.jwtService.refresh(refreshToken)!
 
             res.cookie(AuthController.REFRESH_TOKEN_COOKIE, refreshToken)

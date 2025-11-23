@@ -9,7 +9,7 @@ export class PromptDao {
         this.pool = pool
     }
 
-    public async getPrompts(): Promise<Prompt[]> {
+    public readonly getPrompts = async (): Promise<Prompt[]> => {
         const results = await this.pool.query(`
             SELECT *
             FROM prompts
@@ -18,7 +18,10 @@ export class PromptDao {
         return results.rows as Prompt[]
     }
 
-    public async getPromptsForUser(userId: number): Promise<Prompt[]> {
+    /**
+     * Get all the prompts for a given user.
+     */
+    public readonly getPromptsForUser = async (userId: number): Promise<Prompt[]> => {
 
         const results = await this.pool.query(`
             SELECT *
@@ -31,7 +34,11 @@ export class PromptDao {
         return results.rows as Prompt[]
     }
 
-    public async getPrompt(promptId: number, userId: number): Promise<Prompt | null> {
+    /**
+     * Get a prompt, identified by a prompt ID and user ID.
+     * @throws {PromptNotFound}
+     */
+    public readonly getPrompt = async (promptId: number, userId: number): Promise<Prompt> => {
         const results = await this.pool.query(`
             SELECT *
             FROM prompts
@@ -41,14 +48,19 @@ export class PromptDao {
         )
 
         if (results.rowCount === 0)  {
-            return null
+            throw new PromptNotFound
         }
 
         const result = results.rows[0]
         return result as Prompt
     }
 
-    public async createPrompt(prompt: Prompt): Promise<boolean> {
+    /**
+     * Save a new prompt.
+     * @throws {BadPrompt}
+     * @throws {DuplicatePrompt}
+     */
+    public readonly createPrompt = async (prompt: Prompt) => {
         try {
             await this.pool.query(
                 `
@@ -58,44 +70,74 @@ export class PromptDao {
                 [prompt.userid, prompt.title, prompt.prompt]
             )
         } catch (err) {
+            if ((err as { code: string }).code === '23505') {
+                throw new DuplicatePrompt
+            }
+
             console.error(err)
-            return false
+            throw new BadPrompt
         }
-        return true
     }
 
-    public async deletePrompt(promptId: number, userId: number): Promise<boolean> {
+    /**
+     * Delete the given prompt identified by a prompt ID and user ID.
+     * @throws {PromptNotFound}
+     * @throws {BadPrompt}
+     */
+    public readonly deletePrompt = async (promptId: number, userId: number) => {
         try {
-            await this.pool.query(
+            const results = await this.pool.query(
                 `
                 DELETE FROM prompts
                 WHERE promptid = $1 AND userid = $2
+                RETURNING promptid
                 `, 
                 [promptId, userId]
             )
+            if (results.rowCount === 0) {
+                throw new PromptNotFound
+            }
         } catch (err) {
-            console.error(err)
-            return false
+            if (!(err instanceof PromptNotFound)) {
+                console.error(err)
+                throw new BadPrompt
+            } else {
+                throw err
+            }
         }
-        return true
     }
 
-    public async updatePrompt(prompt: Prompt) {
+    /**
+     * Update an existing prompt.
+     * @throws {PromptNotFound}
+     * @throws {BadPrompt}
+     */
+    public readonly updatePrompt = async (prompt: Prompt) => {
         try {
-            await this.pool.query(
+            const results = await this.pool.query(
                 `
                 UPDATE prompts
                 SET title = $1,
                     prompt = $2
-                WHERE promptid = $1 AND userid = $2
-                `, [prompt.promptid, prompt.userid]
+                WHERE promptid = $3 AND userid = $4
+                RETURNING promptid
+                `, [prompt.title, prompt.prompt, prompt.promptid, prompt.userid]
             )
+            if (results.rowCount === 0) {
+                throw new PromptNotFound
+            }
+
         } catch (err) {
-            console.error(err)
-            return false
+            if (!(err instanceof PromptNotFound)) {
+                console.error(err)
+                throw new BadPrompt
+            } else {
+                throw err
+            }
         }
-        return true
     }
 }
 
-export class DuplicateEmailError extends Error {}
+export class DuplicatePrompt extends Error {}
+export class BadPrompt extends Error {}
+export class PromptNotFound extends Error {}

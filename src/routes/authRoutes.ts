@@ -6,7 +6,7 @@ import type { JwtService } from '../services/jwtservice.ts'
 
 const router = Router()
 
-export function createAuthRouter(dbService: Pool, jwtService: JwtService, middleware: AuthMiddleware): Router {
+export const createAuthRouter = (dbService: Pool, jwtService: JwtService, middleware: AuthMiddleware): Router => {
     const controller = new AuthController(dbService, jwtService)
     const router = Router()
     router.post("/register", controller.register)

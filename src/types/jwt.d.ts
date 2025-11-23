@@ -7,5 +7,10 @@ declare module "express" {
      * is invalid or absent.
      */
     userId?: number
+    /**
+     * The role of the user, determined by the user's JWT. Will be null if the user's JWT 
+     * is invalid or absent.
+     */
+    isAdministrator?: boolean
   }
 }

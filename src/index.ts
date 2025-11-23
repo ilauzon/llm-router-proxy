@@ -8,6 +8,8 @@ import { createAuthRouter } from './routes/authRoutes.ts'
 import { AuthMiddleware } from './middleware/authMiddleware.ts';
 import { createLlmRouter } from './routes/llmRoutes.ts'
 import { JwtService } from "./services/jwtservice.ts"
+import { createPromptRouter } from './routes/promptRoutes.ts'
+import { PromptDao } from "./dao/promptdao.ts"
 
 
 const app: Application = express()
@@ -22,6 +24,7 @@ const dbService: Pool = new Pool({
 })
 
 const userDao: UserDao = new UserDao(dbService)
+const promptDao: PromptDao = new PromptDao(dbService)
 const jwtService: JwtService = new JwtService(process.env.JWT_SECRET!, process.env.REFRESH_SECRET!)
 const authMiddleware: AuthMiddleware = new AuthMiddleware(userDao)
 
@@ -63,14 +66,15 @@ app.use((req: Request, res: Response, next: NextFunction) => {
         return
     }
 
-    const userId = jwtService.verify(accessToken)
+    const payload = jwtService.verify(accessToken)
 
-    if (userId === null) {
+    if (payload=== null) {
         next()
         return
     }
 
-    req.userId = userId
+    req.userId = payload.userId
+    req.isAdministrator = payload.isAdministrator
     
     next()
 })
@@ -78,5 +82,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use("/admin", createAdminRouter(dbService, authMiddleware))
 app.use("/auth", createAuthRouter(dbService, jwtService, authMiddleware))
 app.use("/api", createLlmRouter(dbService, authMiddleware, process.env.REMOTE_LLM_ORIGIN!, process.env.REMOTE_LLM_API_KEY!))
+app.use("/prompts", createPromptRouter(promptDao, authMiddleware))
 
 app.listen(PORT, () => console.log(`Listening on port ${PORT}.`))
