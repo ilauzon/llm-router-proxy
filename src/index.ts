@@ -15,7 +15,8 @@ const PORT = process.env.PORT || 3000
 const dbService: Pool = new Pool({
     user: process.env.POSTGRES_USER,
     password: process.env.POSTGRES_PASSWORD,
-    host: 'localhost',
+    // Use Docker var 'db' if available, otherwise default to localhost
+    host: process.env.DB_HOST || 'localhost', 
     port: 5432,
     database: process.env.POSTGRES_DATABASE,
     max: 20,

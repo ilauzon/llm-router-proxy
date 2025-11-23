@@ -1,0 +1,45 @@
+# Spins up a Postgres container and automatically runs any scripts found in sql/
+#   when the database creates itself for the first time.
+
+services: 
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      # Mapping standard Postgres vars to the .env names
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DATABASE}
+    volumes:
+      # Points to src/sql based on the file structure of this project
+      - ./src/sql:/docker-entrypoint-initdb.d
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  app: 
+    build: .
+    ports: 
+      - "3000:3000" # change left side if we want a different localhost port
+    depends_on:
+      - db
+    environment:
+      # Database Connection Variables (Internal Docker Network)
+      DB_HOST: db
+      DB_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DATABASE: ${POSTGRES_DATABASE}
+
+      # Application Secrets
+      SESSION_COOKIE_SALT: ${SESSION_COOKIE_SALT}
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      REMOTE_LLM_ORIGIN: ${REMOTE_LLM_ORIGIN}
+      REMOTE_LLM_API_KEY: ${REMOTE_LLM_API_KEY}
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:
