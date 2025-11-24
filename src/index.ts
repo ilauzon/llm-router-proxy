@@ -51,8 +51,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     'https://ranveerrai.ca', 
     'http://localhost:8888', 
     'http://localhost:8889', 
+    'http://localhost:8111', 
     'http://127.0.0.1:8888',
     'http://127.0.0.1:8889',
+    'http://127.0.0.1:8111', 
 ]
   const defaultOrigin = 'https://ranveerrai.ca'
   const origin = req.headers.origin;
