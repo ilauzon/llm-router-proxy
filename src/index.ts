@@ -39,28 +39,24 @@ try {
     console.log(`user '${process.env.ADMIN_USERNAME}' already exists. Skipping creation.`)
 }
 
-api.use(express.json())
-
-// send 400 on empty body when body was expected.
-const canBeEmpty = ["/v1/auth/refresh", "/v1/auth/logout"]
-api.use((req: Request, res: Response, next: NextFunction) => {
-    if (req.method === "POST" || req.method === "PUT") {
-        if (req.body === undefined && !canBeEmpty.includes(req.originalUrl)) {
-            return res.status(400).send("Missing request body")
-        }
-    }
-    next()
-})
+app.use(express.json())
 
 app.set('trust proxy', 1)
 
 /**
  * CORS
  */
-api.use((req: Request, res: Response, next: NextFunction) => {
-  const allowedOrigins = ['https://ranveerrai.ca', 'http://localhost:8888', 'http://localhost:8889']
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const allowedOrigins = [
+    'https://ranveerrai.ca', 
+    'http://localhost:8888', 
+    'http://localhost:8889', 
+    'http://127.0.0.1:8888',
+    'http://127.0.0.1:8889',
+]
   const defaultOrigin = 'https://ranveerrai.ca'
   const origin = req.headers.origin;
+
   if (origin && allowedOrigins.includes(origin)) {
        res.setHeader('Access-Control-Allow-Origin', origin);
   } else {
@@ -72,15 +68,27 @@ api.use((req: Request, res: Response, next: NextFunction) => {
   return next();
 });
 
+// send 400 on empty body when body was expected.
+const canBeEmpty = ["/v1/auth/refresh", "/v1/auth/logout"]
+app.use((req: Request, res: Response, next: NextFunction) => {
+    console.log(req.body)
+    if (req.method === "POST" || req.method === "PUT") {
+        if (req.body === undefined && !canBeEmpty.includes(req.originalUrl)) {
+            return res.status(400).send("Missing request body")
+        }
+    }
+    next()
+})
+
 /**
  * Create res.cookie
  */
-api.use(cookieParser())
+app.use(cookieParser())
 
 /**
  * Use Swagger
  */
-api.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 /**
  * Set req.userId if the user has provided a valid access token.
