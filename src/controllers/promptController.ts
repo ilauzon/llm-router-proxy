@@ -147,7 +147,7 @@ export class PromptController {
 
         if (mustMatchToken) {
             if (requestedUserId != req.userId && !req.isAdministrator) {
-                res.status(400).send(`User ID in URL must match your user id '${req.userId}'.`)
+                res.status(403).send(`User ID in URL must match your user id '${req.userId}'.`)
                 return null
             }
         }

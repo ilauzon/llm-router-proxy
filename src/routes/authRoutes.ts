@@ -112,6 +112,8 @@ export const createAuthRouter = (dbService: Pool, jwtService: JwtService, middle
      * /auth/new-key:
      *   post:
      *     summary: Get a new API key.
+     *     description:
+     *       Access token cookie required.
      *     tags:
      *       - Auth
      *     responses:
@@ -134,7 +136,9 @@ export const createAuthRouter = (dbService: Pool, jwtService: JwtService, middle
      * @openapi
      * /auth/me:
      *   get:
-     *     summary: Get the current user's information.
+     *     summary: Get the current user's information
+     *     description:
+     *       Access token cookie required.
      *     tags:
      *       - Auth
      *     responses:
@@ -161,7 +165,9 @@ export const createAuthRouter = (dbService: Pool, jwtService: JwtService, middle
      * @openapi
      * /auth/new-username:
      *   post:
-     *     summary: Change the username of the currently-logged-in user
+     *     summary: Change the username of the currently-logged-in user.
+     *     description:
+     *       Access token cookie required.
      *     tags:
      *       - Auth
      *     responses:
