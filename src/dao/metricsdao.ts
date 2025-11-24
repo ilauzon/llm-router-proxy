@@ -12,19 +12,20 @@ export class MetricsDao {
     readonly getMetrics = async (): Promise<any[]> => {
         const results = await this.pool.query(
             `
-            SELECT method, endpoint, SUM(requestCount) AS requests
+            SELECT method, endpoint, SUM(requestCount)::INTEGER AS requests
             FROM activity_metrics
             GROUP BY (method, endpoint)
             `
         )
         const metrics = results.rows
+        
         return metrics
     }
 
     readonly getMetricsByUser = async (): Promise<any[]> => {
         const results = await this.pool.query(
             `
-            SELECT u.username, u.email, sum(requestCount) AS requests
+            SELECT u.username, u.email, sum(requestCount)::INTEGER AS requests
             FROM activity_metrics AS am
             LEFT JOIN users AS u ON u.id = am.userid
             GROUP BY (u.username, u.email)

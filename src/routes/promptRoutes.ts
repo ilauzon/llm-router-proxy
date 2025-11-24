@@ -105,7 +105,7 @@ export const createPromptRouter = (promptDao: PromptDao, middleware: AuthMiddlew
      *         schema:
      *           type: integer
      *       - in: path
-     *         name: prompt
+     *         name: promptid
      *         description: The ID of the prompt
      *         required: true
      *         schema:
@@ -191,7 +191,7 @@ export const createPromptRouter = (promptDao: PromptDao, middleware: AuthMiddlew
      *         schema:
      *           type: integer
      *       - in: path
-     *         name: prompt
+     *         name: promptid
      *         description: The ID of the prompt
      *         required: true
      *         schema:
@@ -241,7 +241,7 @@ export const createPromptRouter = (promptDao: PromptDao, middleware: AuthMiddlew
      *         schema:
      *           type: integer
      *       - in: path
-     *         name: prompt
+     *         name: promptid
      *         description: The ID of the prompt
      *         required: true
      *         schema:

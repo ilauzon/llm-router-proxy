@@ -12,7 +12,9 @@ import { createPromptRouter } from './routes/promptRoutes.ts'
 import { PromptDao } from "./dao/promptdao.ts"
 import { MetricsDao } from "./dao/metricsdao.ts"
 import { swaggerSpec, swaggerUi } from './swagger/swagger.ts'
+import { types } from 'pg'
 
+types.setTypeParser(20, BigInt);
 
 const app: Application = express()
 const api = express.Router()

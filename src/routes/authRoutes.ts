@@ -84,6 +84,8 @@ export const createAuthRouter = (dbService: Pool, jwtService: JwtService, middle
      * /auth/refresh:
      *   post:
      *     summary: Refresh your access token
+     *     description:
+     *       Refresh token cookie required.
      *     tags:
      *       - Auth
      *     responses:
