@@ -66,7 +66,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   } else {
     res.header('Access-Control-Allow-Origin', defaultOrigin);
   }
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Origin, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
   return next();
