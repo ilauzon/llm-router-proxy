@@ -3,6 +3,8 @@ import type { UUID } from "crypto";
 import type { Pool } from "pg";
 import type { User } from "../models/user.ts";
 import { hashApiKey, hashPassword, verifyPassword } from "../utils/hash.ts";
+import { EMAIL_TAKEN, INVALID_EMAIL, USERNAME_TAKEN } from "../lang/en.ts";
+import { fmt } from "../lang/fmt.ts";
 
 
 export class UserDao {
@@ -93,7 +95,7 @@ export class UserDao {
         const apiKeyHash = hashApiKey(apiKey)
     
         if (!this.isEmail(email)) {
-            throw new InvalidEmailFormatError("Invalid email format.")
+            throw new InvalidEmailFormatError(INVALID_EMAIL)
         }
 
         const uuid = crypto.randomUUID();
@@ -123,7 +125,7 @@ export class UserDao {
         } catch (err) {
             await client.query("ROLLBACK")
             if ((err as { code: string }).code === '23505') {
-                throw new DuplicateEmailError(`Email ${email} is taken.`)
+                throw new DuplicateEmailError(fmt(EMAIL_TAKEN, email))
             } else {
                 throw err
             }
@@ -174,7 +176,7 @@ export class UserDao {
             )
         } catch (err) {
             if ((err as { code: string }).code === '23505') {
-                throw new DuplicateUsernameError(`Username ${username} is taken.`)
+                throw new DuplicateUsernameError(fmt(USERNAME_TAKEN, username))
             } else {
                 throw err
             }

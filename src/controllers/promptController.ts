@@ -2,6 +2,8 @@ import type { Request, Response } from 'express';
 import type { PromptDao } from "../dao/promptdao.ts";
 import type { Prompt } from '../models/prompt.ts';
 import { BadPrompt, DuplicatePrompt, PromptNotFound } from '../dao/promptdao.ts';
+import { fmt } from '../lang/fmt.ts';
+import { MISSING_PARAMETER, PARAMETER_MUST_BE_INTEGER, PARAMETER_MUST_MATCH_BODY, PARAMETERS_MUST_MATCH_AUTH } from '../lang/en.ts';
 
 
 export class PromptController {
@@ -125,21 +127,21 @@ export class PromptController {
     private readonly validateUserIdParameter = (req: Request, res: Response, validateBody: boolean = false, mustMatchToken: boolean = false): number | null => {
         const requestedUser = req.params["userid"]
         if (!requestedUser) {
-            res.status(400).send("Missing 'userid' parameter.")
+            res.status(400).send(fmt(MISSING_PARAMETER, "userid"))
             return null
         }
 
         const requestedUserId = parseInt(requestedUser)
 
         if (isNaN(requestedUserId)) {
-            res.status(400).send("User ID must be an integer.")
+            res.status(400).send(fmt(PARAMETER_MUST_BE_INTEGER, "userid"))
             return null
         }
 
         if (validateBody) {
             const prompt = req.body as Prompt
             if (requestedUserId !== prompt.userid && prompt.userid !== undefined) {
-                res.status(400).send("User ID must match userid in body if it is included in body.")
+                res.status(400).send(fmt(PARAMETER_MUST_MATCH_BODY, "userid"))
                 return null
             }
             (req.body as Prompt).userid = requestedUserId
@@ -147,7 +149,7 @@ export class PromptController {
 
         if (mustMatchToken) {
             if (requestedUserId != req.userId && !req.isAdministrator) {
-                res.status(403).send(`User ID in URL must match your user id '${req.userId}'.`)
+                res.status(403).send(fmt(PARAMETERS_MUST_MATCH_AUTH, "userid", req.userId))
                 return null
             }
         }
@@ -158,21 +160,21 @@ export class PromptController {
     private readonly validatePromptIdParameter = (req: Request, res: Response, validateBody: boolean = false): number | null => {
         const requestedPrompt = req.params["promptid"]
         if (!requestedPrompt) {
-            res.status(400).send("Missing 'promptid' parameter.")
+            res.status(400).send(fmt(MISSING_PARAMETER, "promptid"))
             return null
         }
 
         const requestedPromptId = parseInt(requestedPrompt)
 
         if (isNaN(requestedPromptId)) {
-            res.status(400).send("Prompt ID must be an integer.")
+            res.status(400).send(fmt(PARAMETER_MUST_BE_INTEGER, "promptid"))
             return null
         }
 
         if (validateBody) {
             const prompt = req.body as Prompt
             if (requestedPromptId !== prompt.promptid && prompt.promptid !== undefined) {
-                res.status(400).send("Prompt ID must match promptid in body if it is included in body.")
+                res.status(400).send(fmt(PARAMETER_MUST_MATCH_BODY, "promptid"))
                 return null
             }
             (req.body as Prompt).promptid = requestedPromptId

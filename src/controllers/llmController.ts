@@ -1,6 +1,8 @@
 import { UserDao } from "../dao/userdao.ts";
 import type { Request, Response } from 'express';
 import type { Pool } from "pg";
+import { API_LIMIT_EXCEEDED, ERROR_ENCOUNTERED_WITH_LLM_SERVICE, INVALID_LLM_REQUEST } from "../lang/en.ts";
+import { fmt } from "../lang/fmt.ts";
 
 export class LlmController {
     private readonly userDao: UserDao
@@ -17,7 +19,7 @@ export class LlmController {
         const { prompt, max_tokens } = req.body
 
         if (prompt === undefined || max_tokens === undefined) {
-            return res.status(400).send("Missing 'prompt' and/or 'max_tokens' from body.")
+            return res.status(400).send(INVALID_LLM_REQUEST)
         }
 
         const response = await fetch(`${this.origin}/generate?prompt=${encodeURIComponent(prompt)}&max_tokens=${max_tokens}`, {
@@ -34,13 +36,13 @@ export class LlmController {
             const data = (await response.json()) as { prompt: string, response: string, warning?: string }
 
             if (requestCount > 20) {
-                data.warning = `API limit exceeded, request ${requestCount} out of 20`
+                data.warning = fmt(API_LIMIT_EXCEEDED, requestCount)
             }
 
             return res.json(data)
         } else {
             console.error(response.status, response.body)
-            res.status(500).send("Error encountered with LLM service.")
+            res.status(500).send(ERROR_ENCOUNTERED_WITH_LLM_SERVICE)
         }
     }
 }
