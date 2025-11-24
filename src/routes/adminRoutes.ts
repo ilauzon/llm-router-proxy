@@ -55,8 +55,6 @@ export const createAdminRouter = (userDao: UserDao, metricsDao: MetricsDao, midd
      *     description:
      *       Access token cookie required.
      *       User must be an administrator.
-     *     security:
-     *       - accessTokenCookieAuth: []
      *     tags:
      *       - Admin
      *     responses:

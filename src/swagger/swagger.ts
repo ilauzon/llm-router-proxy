@@ -11,20 +11,9 @@ const options = {
     },
     components: {
       securitySchemes: {
-        "accessTokenCookieAuth": {
-            "type": "JWT Access Token",
-            "in": "cookie",
-            "name": "accessToken"
-        },
-        "refreshTokenCookieAuth": {
-            "type": "JWT Refresh Token",
-            "in": "cookie",
-            "name": "refreshToken"
-        },
-        "apiKeyAuth": {
-            "type": "API Key",
-            "in": "Authorization",
-            "name": "Bearer"
+        "bearerAuth": {
+            "type": "http",
+            "scheme": "bearer"
         }
       },
       schemas: {
@@ -51,7 +40,7 @@ const options = {
     },
     servers: [
         {
-            url: "https://assignments.isaaclauzon.com/v1",
+            url: "https://assignments.isaaclauzon.com:8443/v1",
             description: "Production"
         },
         {

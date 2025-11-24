@@ -16,6 +16,21 @@ export const createAuthRouter = (dbService: Pool, jwtService: JwtService, middle
      *     summary: Create a new account and acquire the API key
      *     tags:
      *       - Auth
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               email:
+     *                 type: string
+     *                 description: The user's email
+     *                 example: john.doe@example.com
+     *               password:
+     *                 type: string
+     *                 description: The user's password
+     *                 example: johnspassword
      *     responses:
      *       409:
      *         description: Email is taken
@@ -41,6 +56,21 @@ export const createAuthRouter = (dbService: Pool, jwtService: JwtService, middle
      *     summary: Log in with an existing account
      *     tags:
      *       - Auth
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               email:
+     *                 type: string
+     *                 description: The user's email
+     *                 example: john.doe@example.com
+     *               password:
+     *                 type: string
+     *                 description: The user's password
+     *                 example: johnspassword
      *     responses:
      *       401:
      *         description: Email or password is incorrect
@@ -85,11 +115,72 @@ export const createAuthRouter = (dbService: Pool, jwtService: JwtService, middle
      *     tags:
      *       - Auth
      *     responses:
+     *       401: 
+     *         description: Not signed in
      *       200:
-     *         description: Success. Clears the accessToken and refreshToken cookies, and invalidates the refresh token.
+     *         description: Success. Invalidates the old API key and issues a new API key.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *             examples:
+     *               success:
+     *                 value:
+     *                   apiKey: 024273dd-42b4-44aa-a99e-f92858921883
      */
     router.post("/new-key", middleware.requireSessionAuth, controller.newApiKey)
+
+    /**
+     * @openapi
+     * /auth/me:
+     *   get:
+     *     summary: Get the current user's information.
+     *     tags:
+     *       - Auth
+     *     responses:
+     *       401: 
+     *         description: Not signed in
+     *       200:
+     *         description: Success
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *             examples:
+     *               success:
+     *                 value:
+     *                   id: 11,
+     *                   email: john.doe@example.com,
+     *                   username: john.doe,
+     *                   isadministrator: false,
+     *                   requestcount: 37
+     */
     router.get("/me", middleware.requireSessionAuth, controller.getMyInfo)
+
+    /**
+     * @openapi
+     * /auth/new-username:
+     *   post:
+     *     summary: Change the username of the currently-logged-in user
+     *     tags:
+     *       - Auth
+     *     responses:
+     *       401: 
+     *         description: Not signed in
+     *       204:
+     *         description: Success
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               username:
+     *                 type: string
+     *                 description: The new username
+     *                 example: johnsnewusername
+     */
     router.post("/new-username", middleware.requireSessionAuth, controller.changeUsername)
     return router
 }
