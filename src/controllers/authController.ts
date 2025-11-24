@@ -39,8 +39,8 @@ export class AuthController {
             const refreshToken = this.jwtService.getNewRefreshToken(user.id, user.isadministrator)
             const accessToken = this.jwtService.refresh(refreshToken)!
 
-            res.cookie(AuthController.REFRESH_TOKEN_COOKIE, refreshToken, { httpOnly: true })
-            res.cookie(AuthController.ACCESS_TOKEN_COOKIE, accessToken, { httpOnly: true })
+            res.cookie(AuthController.REFRESH_TOKEN_COOKIE, refreshToken, { httpOnly: true, sameSite: "none" })
+            res.cookie(AuthController.ACCESS_TOKEN_COOKIE, accessToken, { httpOnly: true, sameSite: "none" })
 
             return res.status(200).send("Logged in successfully")
         } else {
