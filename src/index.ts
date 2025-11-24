@@ -69,9 +69,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 // send 400 on empty body when body was expected.
-const canBeEmpty = ["/v1/auth/refresh", "/v1/auth/logout"]
+const canBeEmpty = ["/v1/auth/refresh", "/v1/auth/logout", "/v1/auth/new-key"]
 app.use((req: Request, res: Response, next: NextFunction) => {
-    console.log(req.body)
     if (req.method === "POST" || req.method === "PUT") {
         if (req.body === undefined && !canBeEmpty.includes(req.originalUrl)) {
             return res.status(400).send("Missing request body")

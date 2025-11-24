@@ -178,8 +178,22 @@ export class UserDao {
             } else {
                 throw err
             }
-
         }
+    }
+
+    public readonly changeApiKey = async (id: number): Promise<string> => {
+        const apiKey = randomUUID()
+        const apiKeyHash = hashApiKey(apiKey)
+
+        await this.pool.query(
+            `
+            UPDATE users
+            SET apiKeyHash = $2
+            WHERE id = $1
+            `, [id, apiKeyHash]
+        )
+
+        return apiKey
     }
 
     private readonly isEmail = (email: string): boolean => {

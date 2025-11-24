@@ -71,7 +71,8 @@ export class AuthController {
     }
 
     readonly newApiKey = async (req: Request, res: Response) => {
-        throw new Error("Not implemented")
+        const apiKey = await this.userDao.changeApiKey(req.userId!)
+        res.json({ apiKey })
     }
 
     readonly getMyInfo = async (req: Request, res: Response) => {
